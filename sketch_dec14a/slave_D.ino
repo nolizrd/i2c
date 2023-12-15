@@ -2,6 +2,7 @@
 
 int ownAddress = 3; // Адрес текущего слейва
 unsigned char id = 'D'; // Имя текущего слейва
+char lastSender = ' '; // Переменная для хранения последнего отправителя
 
 struct AddressTable {
   char name;
@@ -13,6 +14,7 @@ AddressTable addressTable[] = {
   {'C', 2},
   {'D', 3}
 };
+
 
 void setup() {
   Serial.begin(9600);
@@ -30,9 +32,25 @@ void loop() {
       if (recipientAddress != -1) {
         String message = input.substring(7);
         sendMessage(recipientAddress, message);
-        Serial.println("Message sent.");
+
+        Serial.print("Addressee's name: ");
+        Serial.write(recipientName);
+        Serial.write("\n");
+        Serial.print("Message: ");
+        Serial.print(message);
+        
+      
+        Serial.write("\nMessage delivered.\n");
       } else {
-        Serial.println("Recipient not found in the address table.");
+        Serial.println("Recipient not found in the address table.\n");
+      }
+    } else if (input.startsWith("reply ")) {
+      if (lastSender != ' ') {
+        String replyMessage = input.substring(6);
+        sendMessage(getRecipientAddress(lastSender), replyMessage);
+        Serial.println("Reply sent to the last sender.");
+      } else {
+        Serial.println("No last sender to reply to.");
       }
     }
   }
@@ -55,27 +73,19 @@ int getRecipientAddress(char recipientName) {
 }
 
 void receiveEvent(int length) {
-  lastSenderId = Wire.read(); // Обновление: сохраняем адресат на каждый receiveEvent
-  
-  Serial.print("Sender's ID: '");
-  Serial.write(lastSenderId);
-  Serial.println("'");
+  if (Wire.available()) {
+    char senderId = Wire.read();  // Прочитать идентификатор отправителя
+    lastSender = senderId;  // Сохранить идентификатор последнего отправителя
 
-  Serial.print("Message: ");
-  while (1 < Wire.available()) { // loop through all but the last
-    char c = Wire.read(); // receive byte as a character
-    Serial.print(c);         // print the character
-  }
-  char x = Wire.read();    // receive byte as an integer
-  Serial.println(x);         // print the integer
-}
+    Serial.print("Sender's name: ");
+    Serial.write(senderId);
+    Serial.write("\n");
+    Serial.print("Message: ");
 
-// Добавляем функцию для отправки ответа последнему написавшему
-void replyToLastSender(String message) {
-  if (lastSenderId != -1) {
-    sendMessage(lastSenderId, message);
-    Serial.println("Reply sent to last sender.");
-  } else {
-    Serial.println("No last sender to reply to.");
+    while (Wire.available()) {
+      char c = Wire.read();
+      Serial.print(c);
+    }  
+    Serial.println();
   }
 }
