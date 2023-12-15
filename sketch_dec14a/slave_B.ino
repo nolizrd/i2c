@@ -39,19 +39,7 @@ void loop() {
         Serial.print("Message: ");
         Serial.print(message);
         
-        // Wire.beginTransmission(recipientAddress);
-        // delay(100);
-        
-        // Wire.write(id);
-        // while (Serial.available()) {
-        //   char c = Serial.read();
-        //   Serial.write(c);
-        //   Wire.write(c);
-        // }
-        
-        // Wire.write('.');
-        
-        // Wire.endTransmission();
+      
         Serial.write("\nMessage delivered.\n");
       } else {
         Serial.println("Recipient not found in the address table.\n");
